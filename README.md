@@ -82,7 +82,8 @@ and seeds the demo data below.
 
 The PostGIS container publishes itself on host port **5433** (not 5432) by default, so it
 does not collide with a PostgreSQL already installed on the machine. Override it with
-`DB_PORT` if you need another port.
+`DB_PORT` if you need another port. The API is published on **8080**; set `API_PORT` to
+move it if 8080 is already taken.
 
 To run just the database in Docker and the API from your IDE or Maven:
 
