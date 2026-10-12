@@ -104,6 +104,9 @@ class TripAndSosIntegrationTest extends ApiIntegrationTest {
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("RESOLVED"))
+                .andExpect(jsonPath("$.resolutionNote").value("Group walked out at dawn"))
+                // The triage note must not overwrite the original distress message.
+                .andExpect(jsonPath("$.message").value("Fall detected, no response"))
                 .andExpect(jsonPath("$.resolvedAt").isNotEmpty());
 
         // An unrelated hiker cannot read a live alert.

@@ -67,8 +67,13 @@ public class SosAlert extends BaseEntity {
 
     private Integer batteryPercent;
 
+    /** What the person in trouble said, captured when the alert was raised. */
     @Column(length = 500)
     private String message;
+
+    /** What the operations desk recorded when triaging or closing the alert. */
+    @Column(length = 500)
+    private String resolutionNote;
 
     /** WKT of the trail walked up to the alert, replayed on the Basecamp map. */
     @Column(columnDefinition = "text")

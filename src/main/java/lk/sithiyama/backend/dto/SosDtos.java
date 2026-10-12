@@ -59,6 +59,7 @@ public final class SosDtos {
             double longitude,
             Integer batteryPercent,
             String message,
+            String resolutionNote,
             UUID acknowledgedById,
             String acknowledgedByName,
             Instant acknowledgedAt,

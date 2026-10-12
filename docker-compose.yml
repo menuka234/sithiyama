@@ -7,7 +7,10 @@ services:
       POSTGRES_USER: sithiyama
       POSTGRES_PASSWORD: sithiyama
     ports:
-      - "5432:5432"
+      # Host port 5433 by default so a PostgreSQL already installed on the
+      # machine (which usually claims 5432) does not shadow the container.
+      # Override with DB_PORT if you prefer another host port.
+      - "${DB_PORT:-5433}:5432"
     volumes:
       - sithiyama-db-data:/var/lib/postgresql/data
     healthcheck:

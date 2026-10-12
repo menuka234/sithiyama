@@ -80,6 +80,17 @@ docker compose up --build
 On first start Flyway creates the schema, enables PostGIS, wires the geometry triggers
 and seeds the demo data below.
 
+The PostGIS container publishes itself on host port **5433** (not 5432) by default, so it
+does not collide with a PostgreSQL already installed on the machine. Override it with
+`DB_PORT` if you need another port.
+
+To run just the database in Docker and the API from your IDE or Maven:
+
+```bash
+docker compose up -d db
+./mvnw spring-boot:run          # connects to localhost:5433 with the defaults
+```
+
 ### Seeded demo accounts
 
 | Username | Password | Role |
@@ -227,7 +238,7 @@ gated by `sithiyama.spatial.enabled`; when it is `false` a bounding-box filter i
 
 | Property | Env var | Default |
 |---|---|---|
-| `spring.datasource.url` | `DB_URL` | `jdbc:postgresql://localhost:5432/sithiyama` |
+| `spring.datasource.url` | `DB_URL` | `jdbc:postgresql://localhost:5433/sithiyama` |
 | `spring.datasource.username` | `DB_USERNAME` | `sithiyama` |
 | `spring.datasource.password` | `DB_PASSWORD` | `sithiyama` |
 | `sithiyama.jwt.secret` | `JWT_SECRET` | dev-only value (≥ 32 bytes, override it) |

@@ -1,0 +1,206 @@
+### SITHIYAMA backend - example requests
+### Works with the VS Code "REST Client" extension or the IntelliJ HTTP client.
+### Start the stack first:  docker compose up --build
+@baseUrl = http://localhost:8080
+@token = PASTE_ACCESS_TOKEN_HERE
+
+### Health check
+GET {{baseUrl}}/actuator/health
+
+### ---------------------------------------------------------------
+### Auth
+### ---------------------------------------------------------------
+
+### Register a hiker
+POST {{baseUrl}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "username": "manoj",
+  "email": "manoj@example.lk",
+  "password": "Password123!",
+  "displayName": "Manoj Perera",
+  "phone": "+94771234567",
+  "locale": "si"
+}
+
+### Sign in as the seeded guide
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "guide",
+  "password": "Password123!"
+}
+
+### Who am I
+GET {{baseUrl}}/api/v1/auth/me
+Authorization: Bearer {{token}}
+
+### ---------------------------------------------------------------
+### Route library (public read)
+### ---------------------------------------------------------------
+
+### Everything in the Knuckles
+GET {{baseUrl}}/api/v1/routes?region=Knuckles&size=10
+
+### Free-text search
+GET {{baseUrl}}/api/v1/routes?q=waterfall
+
+### Radius search 5 km around Riverston (PostGIS ST_DWithin)
+GET {{baseUrl}}/api/v1/routes?nearLat=7.53&nearLon=80.75&radiusMeters=5000
+
+### Long routes only
+GET {{baseUrl}}/api/v1/routes?minDistanceMeters=8000&difficulty=HARD
+
+### Publish a route
+POST {{baseUrl}}/api/v1/routes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Gerandigala Ridge Walk",
+  "description": "The route the 2023 group was rescued from. Exposed in rain and fog.",
+  "region": "Knuckles",
+  "difficulty": "HARD",
+  "visibility": "PUBLIC",
+  "ascentMeters": 640,
+  "tags": ["knuckles", "ridge", "exposed"],
+  "path": [
+    { "latitude": 7.4380, "longitude": 80.7650 },
+    { "latitude": 7.4320, "longitude": 80.7720 },
+    { "latitude": 7.4260, "longitude": 80.7810 },
+    { "latitude": 7.4190, "longitude": 80.7895 }
+  ],
+  "waypoints": [
+    { "name": "Trailhead", "type": "TRAILHEAD", "latitude": 7.4380, "longitude": 80.7650 },
+    { "name": "Exposed shoulder", "type": "HAZARD", "latitude": 7.4260, "longitude": 80.7810, "note": "No shelter, single file" },
+    { "name": "Summit", "type": "VIEWPOINT", "latitude": 7.4190, "longitude": 80.7895 }
+  ]
+}
+
+### ---------------------------------------------------------------
+### Track sync (app recording or Companion Node breadcrumbs)
+### ---------------------------------------------------------------
+
+POST {{baseUrl}}/api/v1/tracks
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Node breadcrumb log - Knuckles",
+  "source": "NODE",
+  "status": "COMPLETED",
+  "startedAt": "2026-01-04T01:30:00Z",
+  "points": [
+    { "latitude": 7.4640, "longitude": 80.7780, "batteryPercent": 92, "recordedAt": "2026-01-04T01:30:00Z" },
+    { "latitude": 7.4588, "longitude": 80.7845, "batteryPercent": 88, "recordedAt": "2026-01-04T01:48:00Z" },
+    { "latitude": 7.4505, "longitude": 80.7910, "batteryPercent": 84, "recordedAt": "2026-01-04T02:06:00Z" }
+  ]
+}
+
+GET {{baseUrl}}/api/v1/tracks
+Authorization: Bearer {{token}}
+
+### ---------------------------------------------------------------
+### Trip plans and check-ins
+### ---------------------------------------------------------------
+
+POST {{baseUrl}}/api/v1/trips
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Knuckles day hike - 12 people",
+  "plannedStartAt": "2026-01-04T00:30:00Z",
+  "plannedEndAt": "2026-01-04T11:00:00Z",
+  "groupSize": 12,
+  "checkInIntervalMinutes": 90,
+  "emergencyContactName": "Nimal Perera",
+  "emergencyContactPhone": "+94770000000",
+  "members": [
+    { "name": "Saman (leader)", "phone": "+94771111111", "teamLead": true },
+    { "name": "Kumari", "phone": "+94772222222" }
+  ]
+}
+
+### Check in (proof of life)
+POST {{baseUrl}}/api/v1/trips/PASTE_TRIP_ID/check-ins
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "latitude": 7.4588,
+  "longitude": 80.7845,
+  "batteryPercent": 61,
+  "message": "Past the cloud forest gate"
+}
+
+### Trips that have missed their check-in window
+GET {{baseUrl}}/api/v1/trips/overdue
+Authorization: Bearer {{token}}
+
+### ---------------------------------------------------------------
+### SOS
+### ---------------------------------------------------------------
+
+### Raise an alert the way a Companion Node would
+POST {{baseUrl}}/api/v1/sos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "source": "NODE",
+  "latitude": 7.4505,
+  "longitude": 80.7910,
+  "batteryPercent": 17,
+  "message": "Fall detected, no response to check-in",
+  "trail": [
+    { "latitude": 7.4640, "longitude": 80.7780 },
+    { "latitude": 7.4588, "longitude": 80.7845 },
+    { "latitude": 7.4505, "longitude": 80.7910 }
+  ]
+}
+
+### Operations view (ranger or admin token)
+GET {{baseUrl}}/api/v1/sos?status=ACTIVE
+Authorization: Bearer {{token}}
+
+### Acknowledge - use the seeded ranger
+POST {{baseUrl}}/api/v1/sos/PASTE_ALERT_ID/acknowledge
+Authorization: Bearer {{token}}
+
+### Resolve
+PATCH {{baseUrl}}/api/v1/sos/PASTE_ALERT_ID/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "RESOLVED",
+  "note": "Group walked out at dawn"
+}
+
+### ---------------------------------------------------------------
+### Companion Nodes
+### ---------------------------------------------------------------
+
+POST {{baseUrl}}/api/v1/nodes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "deviceCode": "RAK-0001",
+  "label": "Group node A",
+  "firmwareVersion": "0.1.0"
+}
+
+POST {{baseUrl}}/api/v1/nodes/PASTE_NODE_ID/heartbeat
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "batteryPercent": 88,
+  "latitude": 7.4640,
+  "longitude": 80.7780,
+  "firmwareVersion": "0.2.0"
+}

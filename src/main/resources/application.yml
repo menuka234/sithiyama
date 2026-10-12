@@ -3,7 +3,7 @@ spring:
     name: sithiyama-backend
 
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/sithiyama}
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/sithiyama}
     username: ${DB_USERNAME:sithiyama}
     password: ${DB_PASSWORD:sithiyama}
     driver-class-name: org.postgresql.Driver

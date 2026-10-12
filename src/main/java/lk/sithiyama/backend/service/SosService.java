@@ -124,7 +124,7 @@ public class SosService {
             alert.setAcknowledgedAt(Instant.now());
         }
         if (request.note() != null && !request.note().isBlank()) {
-            alert.setMessage(request.note());
+            alert.setResolutionNote(request.note());
         }
         return toResponse(sosRepository.save(alert));
     }
@@ -167,6 +167,7 @@ public class SosService {
                 alert.getLongitude(),
                 alert.getBatteryPercent(),
                 alert.getMessage(),
+                alert.getResolutionNote(),
                 alert.getAcknowledgedBy() == null ? null : alert.getAcknowledgedBy().getId(),
                 alert.getAcknowledgedBy() == null ? null : alert.getAcknowledgedBy().getDisplayName(),
                 alert.getAcknowledgedAt(),
