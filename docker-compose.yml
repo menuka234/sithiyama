@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: sithiyama-db
+    environment:
+      POSTGRES_DB: sithiyama
+      POSTGRES_USER: sithiyama
+      POSTGRES_PASSWORD: sithiyama
+    ports:
+      - "5432:5432"
+    volumes:
+      - sithiyama-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sithiyama -d sithiyama"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  api:
+    build: .
+    container_name: sithiyama-api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/sithiyama
+      DB_USERNAME: sithiyama
+      DB_PASSWORD: sithiyama
+      # Change this before shipping anywhere real.
+      JWT_SECRET: ${JWT_SECRET:-sithiyama-compose-signing-key-change-me-0123456789abcdef}
+      SERVER_PORT: 8080
+    ports:
+      - "8080:8080"
+
+volumes:
+  sithiyama-db-data:
