@@ -1,11 +1,14 @@
 spring:
   application:
     name: sithiyama-backend
+  config:
+    # Keep local secrets out of Git. Create an untracked .env with DB_PASSWORD=...
+    import: optional:file:.env[.properties]
 
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5433/sithiyama}
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:menuka@2004##}
+    username: ${DB_USERNAME:sithiyama}
+    password: ${DB_PASSWORD:sithiyama}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10

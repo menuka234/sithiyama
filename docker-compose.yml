@@ -27,8 +27,8 @@ services:
         condition: service_healthy
     environment:
       DB_URL: jdbc:postgresql://db:5432/sithiyama
-      DB_USERNAME: root
-      DB_PASSWORD: menuka@2004##
+      DB_USERNAME: sithiyama
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-sithiyama}
       # Change this before shipping anywhere real.
       JWT_SECRET: ${JWT_SECRET:-sithiyama-compose-signing-key-change-me-0123456789abcdef}
       SERVER_PORT: 8080

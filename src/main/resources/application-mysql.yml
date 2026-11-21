@@ -1,0 +1,46 @@
+# ---------------------------------------------------------------------------
+# "mysql" profile - MySQL 8 (local server, no Docker required).
+#
+#   .\mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=mysql
+#
+# Notes:
+#   * MySQL has no PostGIS, so Flyway (which is written for PostgreSQL/PostGIS)
+#     is disabled and Hibernate maintains the schema instead.
+#   * Radius ("near") route search falls back to a bounding-box approximation,
+#     because the PostGIS geometry columns do not exist here.
+#   * Existing data in the `sithiyama` database is preserved (ddl-auto: update).
+# ---------------------------------------------------------------------------
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/sithiyama?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true}
+    username: ${DB_USERNAME:root}
+    # Supply the local password through .env (gitignored) or DB_PASSWORD env var.
+    password: ${DB_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      pool-name: sithiyama-pool
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.MySQLDialect
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 100
+          time_zone: UTC
+        order_inserts: true
+        order_updates: true
+
+  flyway:
+    enabled: false
+
+sithiyama:
+  spatial:
+    enabled: false
+  demo-data:
+    # Flyway is disabled here, so the local profile seeds the documented
+    # admin/guide/ranger accounts itself. Set to false to skip that.
+    enabled: ${SITHIYAMA_DEMO_DATA:true}
