@@ -2,6 +2,7 @@ package lk.sithiyama.backend.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
+import lk.sithiyama.backend.config.GeminiConfig;
 import lk.sithiyama.backend.dto.CommonDtos.ApiErrorResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -62,6 +63,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login").permitAll()
+                        .requestMatchers("/api/ai/health", "/api/ai/find-route").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/routes", "/api/v1/routes/**").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
@@ -81,7 +83,8 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(List.of("*"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowedHeaders(List.of(
+                "Authorization", "Content-Type", GeminiConfig.API_KEY_HEADER));
         configuration.setExposedHeaders(List.of("Location"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);

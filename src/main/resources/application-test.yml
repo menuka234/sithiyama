@@ -24,3 +24,8 @@ sithiyama:
     access-token-ttl: PT1H
   spatial:
     enabled: false
+  ai:
+    gemini:
+      # Keep tests hermetic: no real Gemini calls. Keys used in tests are fake.
+      base-url: http://localhost:9
+      timeout-seconds: 1

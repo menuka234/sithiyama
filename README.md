@@ -166,7 +166,28 @@ requires `Authorization: Bearer <token>`.
 Distance and duration are computed server-side (haversine + a default 3 km/h) when the
 client does not supply them.
 
-### AI route assistant — `/ai`
+### AI route finder — `/api/ai`
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/api/ai/health` | `{ "status": "ok", "gemini": "connected" }` when a key is available; `gemini` is `not_configured` otherwise. |
+| `POST` | `/api/ai/find-route` | Body `{ "message": "mata stress, ninda yanne na" }`. Returns JSON only: `intent`, `route`, `label`, `reply`, `params`. |
+
+The optional `x-gemini-key` request header overrides the server key for that call. When it is
+absent, the server uses `GEMINI_API_KEY` from the gitignored `.env`. The key is never returned
+in a response. This endpoint uses `gemini-1.5-flash` (override with `GEMINI_FINDER_MODEL`).
+
+Allowed routes: `/mood-tracker`, `/meditation`, `/meditation/sleep`, `/breathing`, `/journal`,
+`/chat`, `/therapist`, `/sleep`, `/emergency`. Self-harm / suicidal / severe-distress phrases
+(including "sad") are intercepted before Gemini and always return `/emergency` with a
+supportive reply. Without a key, a deterministic Sinhala/Singlish/English mapping is used.
+
+```powershell
+Invoke-RestMethod -Uri http://localhost:8080/api/ai/find-route -Method Post `
+  -ContentType application/json -Body '{"message":"mata stress, ninda yanne na"}'
+```
+
+### AI route assistant for saved routes — `/api/v1/ai`
 
 | Method | Path | Notes |
 |---|---|---|
@@ -273,6 +294,7 @@ gated by `sithiyama.spatial.enabled`; when it is `false` a bounding-box filter i
 | `sithiyama.demo-data.enabled` | `SITHIYAMA_DEMO_DATA` | `true` in the `mysql` profile |
 | `sithiyama.ai.gemini.api-key` | `GEMINI_API_KEY` | empty (local route facts only) |
 | `sithiyama.ai.gemini.model` | `GEMINI_MODEL` | `gemini-2.5-flash` |
+| `sithiyama.ai.route-finder.model` | `GEMINI_FINDER_MODEL` | `gemini-1.5-flash` |
 | `sithiyama.ai.gemini.base-url` | `GEMINI_BASE_URL` | `https://generativelanguage.googleapis.com` |
 | `sithiyama.ai.gemini.timeout-seconds` | `GEMINI_TIMEOUT_SECONDS` | `30` |
 | `server.port` | `SERVER_PORT` | `8080` |

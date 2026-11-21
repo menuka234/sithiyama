@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /** Payloads for the Gemini-powered route assistant. */
@@ -45,5 +46,28 @@ public final class AiDtos {
     }
 
     public record AiStatusResponse(boolean enabled, String model) {
+    }
+
+    /** Request for the mental-health route finder. */
+    public record FindRouteRequest(
+            @NotBlank
+            @Size(max = 1_000)
+            String message) {
+    }
+
+    /**
+     * JSON-only answer returned by /api/ai/find-route. No key or other secret
+     * is ever included in this response.
+     */
+    public record RouteFinderResponse(
+            String intent,
+            String route,
+            String label,
+            String reply,
+            Map<String, Object> params) {
+    }
+
+    /** Health shape required by the frontend. */
+    public record AiHealthResponse(String status, String gemini) {
     }
 }

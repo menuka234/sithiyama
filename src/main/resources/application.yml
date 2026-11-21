@@ -82,3 +82,5 @@ sithiyama:
       model: ${GEMINI_MODEL:gemini-2.5-flash}
       base-url: ${GEMINI_BASE_URL:https://generativelanguage.googleapis.com}
       timeout-seconds: ${GEMINI_TIMEOUT_SECONDS:30}
+    route-finder:
+      model: ${GEMINI_FINDER_MODEL:gemini-1.5-flash}
