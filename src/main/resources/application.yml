@@ -4,8 +4,8 @@ spring:
 
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5433/sithiyama}
-    username: ${DB_USERNAME:sithiyama}
-    password: ${DB_PASSWORD:sithiyama}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:menuka@2004##}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -71,3 +71,11 @@ sithiyama:
     # When true, radius ("near") route search uses PostGIS geometry columns.
     # Requires the Flyway migrations to have run against a real PostGIS database.
     enabled: true
+  ai:
+    gemini:
+      # Google AI Studio key. Leave blank to use the built-in route facts only.
+      # Get one at https://aistudio.google.com/app/apikey
+      api-key: ${GEMINI_API_KEY:}
+      model: ${GEMINI_MODEL:gemini-2.5-flash}
+      base-url: ${GEMINI_BASE_URL:https://generativelanguage.googleapis.com}
+      timeout-seconds: ${GEMINI_TIMEOUT_SECONDS:30}

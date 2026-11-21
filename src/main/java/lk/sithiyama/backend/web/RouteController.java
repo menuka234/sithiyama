@@ -60,6 +60,56 @@ public class RouteController {
         return routeService.search(criteria, pageable);
     }
 
+    @GetMapping("/community")
+    @Operation(summary = "Community routes created by other users")
+    public PageResponse<RouteSummary> community(
+            @RequestParam(required = false) String q,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return routeService.community(q, pageable);
+    }
+
+    @GetMapping("/my")
+    @Operation(summary = "Routes created by the current user")
+    public PageResponse<RouteSummary> myRoutes(
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return routeService.myRoutes(pageable);
+    }
+
+    @GetMapping("/saved")
+    @Operation(summary = "Routes saved/favourited by the current user")
+    public PageResponse<RouteSummary> saved(
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return routeService.saved(pageable);
+    }
+
+    @PostMapping("/{id}/save")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Save (favourite) a community route")
+    public void save(@PathVariable UUID id) {
+        routeService.saveRoute(id);
+    }
+
+    @DeleteMapping("/{id}/save")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Remove a saved route")
+    public void unsave(@PathVariable UUID id) {
+        routeService.unsaveRoute(id);
+    }
+
+    @PostMapping("/{id}/like")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Like a route")
+    public void like(@PathVariable UUID id) {
+        routeService.likeRoute(id);
+    }
+
+    @DeleteMapping("/{id}/like")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Unlike a route")
+    public void unlike(@PathVariable UUID id) {
+        routeService.unlikeRoute(id);
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Fetch one route, including its polyline and waypoints")
     public RouteResponse get(@PathVariable UUID id) {

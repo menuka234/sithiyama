@@ -58,4 +58,12 @@ public class RouteWaypoint extends BaseEntity {
 
     @Column(length = 500)
     private String note;
+
+    /**
+     * Optional checkpoint photo, stored as a data URL / base64 string so it
+     * works with both PostgreSQL (text) and MySQL (longtext). Kept short by
+     * downscaling images in the client before upload.
+     */
+    @Column(columnDefinition = "text")
+    private String photo;
 }

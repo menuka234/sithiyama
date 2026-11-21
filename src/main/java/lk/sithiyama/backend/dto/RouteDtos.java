@@ -37,7 +37,14 @@ public final class RouteDtos {
             Double elevationMeters,
 
             @Size(max = 500)
-            String note) {
+            String note,
+
+            /**
+             * Optional checkpoint photo as a data URL. The browser downscales
+             * images before sending, so the payload stays small.
+             */
+            @Size(max = 1_500_000)
+            String photo) {
     }
 
     public record RouteRequest(
@@ -80,7 +87,8 @@ public final class RouteDtos {
             double latitude,
             double longitude,
             Double elevationMeters,
-            String note) {
+            String note,
+            String photo) {
     }
 
     public record RouteResponse(
@@ -103,7 +111,8 @@ public final class RouteDtos {
             UUID creatorId,
             String creatorName,
             Instant createdAt,
-            Instant updatedAt) {
+            Instant updatedAt,
+            long likeCount) {
     }
 
     /** Lighter shape for list responses (no polyline payload). */
@@ -125,7 +134,8 @@ public final class RouteDtos {
             UUID creatorId,
             String creatorName,
             Instant createdAt,
-            Instant updatedAt) {
+            Instant updatedAt,
+            long likeCount) {
     }
 
     /**

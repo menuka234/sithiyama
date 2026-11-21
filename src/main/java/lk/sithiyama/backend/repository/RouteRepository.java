@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lk.sithiyama.backend.domain.Route;
+import lk.sithiyama.backend.domain.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,9 +23,9 @@ public interface RouteRepository extends JpaRepository<Route, UUID> {
             SELECT r FROM Route r
             WHERE r.visibility IN :visibilities
               AND (:ownerId IS NULL OR r.creator.id = :ownerId)
-              AND (:qLike IS NULL OR LOWER(r.name) LIKE :qLike
-                   OR LOWER(COALESCE(r.description, '')) LIKE :qLike)
-              AND (:region IS NULL OR LOWER(COALESCE(r.region, '')) = LOWER(:region))
+              AND (:qLike IS NULL OR LOWER(CAST(r.name AS string)) LIKE :qLike
+                   OR LOWER(CAST(COALESCE(r.description, '') AS string)) LIKE :qLike)
+              AND (:region IS NULL OR LOWER(CAST(COALESCE(r.region, '') AS string)) = LOWER(CAST(:region AS string)))
               AND (:difficulty IS NULL OR r.difficulty = :difficulty)
               AND (:maxDistanceMeters IS NULL OR r.distanceMeters <= :maxDistanceMeters)
               AND (:minDistanceMeters IS NULL OR r.distanceMeters >= :minDistanceMeters)
@@ -80,4 +81,28 @@ public interface RouteRepository extends JpaRepository<Route, UUID> {
             @Param("limit") int limit);
 
     Optional<Route> findByNameIgnoreCase(String name);
+
+    /**
+     * Community listing: public routes, optionally excluding the caller's own
+     * routes and optionally filtered by a case-insensitive name/description
+     * search. CAST keeps the parameters typed on PostgreSQL as well as MySQL.
+     */
+    @Query("""
+            SELECT r FROM Route r
+            WHERE r.visibility = :visibility
+              AND (:excludeCreatorId IS NULL OR r.creator.id <> :excludeCreatorId)
+              AND (:qLike IS NULL OR LOWER(CAST(r.name AS string)) LIKE :qLike
+                   OR LOWER(CAST(COALESCE(r.description, '') AS string)) LIKE :qLike)
+            """)
+    Page<Route> searchCommunity(
+            @Param("visibility") Route.Visibility visibility,
+            @Param("excludeCreatorId") UUID excludeCreatorId,
+            @Param("qLike") String qLike,
+            Pageable pageable);
+
+    org.springframework.data.domain.Page<Route> findByCreator(User creator, org.springframework.data.domain.Pageable pageable);
+
+    org.springframework.data.domain.Page<Route> findByVisibility(Route.Visibility visibility, org.springframework.data.domain.Pageable pageable);
+
+    org.springframework.data.domain.Page<Route> findByVisibilityAndCreatorNot(Route.Visibility visibility, User creator, org.springframework.data.domain.Pageable pageable);
 }

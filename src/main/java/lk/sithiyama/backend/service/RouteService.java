@@ -24,6 +24,10 @@ import lk.sithiyama.backend.dto.RouteDtos.WaypointResponse;
 import lk.sithiyama.backend.exception.BadRequestException;
 import lk.sithiyama.backend.exception.ForbiddenException;
 import lk.sithiyama.backend.exception.ResourceNotFoundException;
+import lk.sithiyama.backend.domain.RouteFavourite;
+import lk.sithiyama.backend.domain.RouteLike;
+import lk.sithiyama.backend.repository.RouteFavouriteRepository;
+import lk.sithiyama.backend.repository.RouteLikeRepository;
 import lk.sithiyama.backend.repository.RouteRepository;
 import lk.sithiyama.backend.repository.UserRepository;
 import lk.sithiyama.backend.security.AppUserPrincipal;
@@ -48,13 +52,19 @@ public class RouteService {
     private static final int MAX_TAGS = 20;
 
     private final RouteRepository routeRepository;
+    private final RouteFavouriteRepository favouriteRepository;
+    private final RouteLikeRepository likeRepository;
     private final UserRepository userRepository;
     private final boolean spatialEnabled;
 
     public RouteService(RouteRepository routeRepository,
+                        RouteFavouriteRepository favouriteRepository,
+                        RouteLikeRepository likeRepository,
                         UserRepository userRepository,
                         @Value("${sithiyama.spatial.enabled:false}") boolean spatialEnabled) {
         this.routeRepository = routeRepository;
+        this.favouriteRepository = favouriteRepository;
+        this.likeRepository = likeRepository;
         this.userRepository = userRepository;
         this.spatialEnabled = spatialEnabled;
     }
@@ -138,6 +148,72 @@ public class RouteService {
         Route route = requireRoute(id);
         assertWritable(route);
         routeRepository.delete(route);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<RouteSummary> community(String q, Pageable pageable) {
+        UUID currentId = null;
+        try {
+            currentId = SecurityUtils.requireUserId();
+        } catch (Exception ignored) {
+            // Anonymous callers still see the public community library.
+        }
+        String qLike = q == null || q.isBlank() ? null : "%" + q.trim().toLowerCase() + "%";
+        Page<Route> page = routeRepository.searchCommunity(Route.Visibility.PUBLIC, currentId, qLike, pageable);
+        return PageResponse.of(page.map(this::toSummary));
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<RouteSummary> myRoutes(Pageable pageable) {
+        User current = userRepository.findById(SecurityUtils.requireUserId()).orElseThrow(() -> new ResourceNotFoundException("Account no longer exists"));
+        Page<Route> page = routeRepository.findByCreator(current, pageable);
+        return PageResponse.of(page.map(this::toSummary));
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<RouteSummary> saved(Pageable pageable) {
+        User current = userRepository.findById(SecurityUtils.requireUserId()).orElseThrow(() -> new ResourceNotFoundException("Account no longer exists"));
+        Page<RouteFavourite> favs = favouriteRepository.findByUser(current, pageable);
+        List<RouteSummary> content = favs.getContent().stream().map((RouteFavourite f) -> toSummary(f.getRoute())).toList();
+        return new PageResponse<>(content, favs.getNumber(), favs.getSize(), favs.getTotalElements(), favs.getTotalPages(), favs.isLast());
+    }
+
+    @Transactional
+    public void saveRoute(UUID id) {
+        User current = userRepository.findById(SecurityUtils.requireUserId()).orElseThrow(() -> new ResourceNotFoundException("Account no longer exists"));
+        Route route = requireRoute(id);
+        if (!favouriteRepository.existsByUserAndRoute(current, route)) {
+            RouteFavourite fav = new RouteFavourite();
+            fav.setUser(current);
+            fav.setRoute(route);
+            favouriteRepository.save(fav);
+        }
+    }
+
+    @Transactional
+    public void unsaveRoute(UUID id) {
+        User current = userRepository.findById(SecurityUtils.requireUserId()).orElseThrow(() -> new ResourceNotFoundException("Account no longer exists"));
+        Route route = requireRoute(id);
+        favouriteRepository.deleteByUserAndRoute(current, route);
+    }
+
+    @Transactional
+    public void likeRoute(UUID id) {
+        User current = userRepository.findById(SecurityUtils.requireUserId()).orElseThrow(() -> new ResourceNotFoundException("Account no longer exists"));
+        Route route = requireRoute(id);
+        if (!likeRepository.existsByUserAndRoute(current, route)) {
+            RouteLike like = new RouteLike();
+            like.setUser(current);
+            like.setRoute(route);
+            likeRepository.save(like);
+        }
+    }
+
+    @Transactional
+    public void unlikeRoute(UUID id) {
+        User current = userRepository.findById(SecurityUtils.requireUserId()).orElseThrow(() -> new ResourceNotFoundException("Account no longer exists"));
+        Route route = requireRoute(id);
+        likeRepository.deleteByUserAndRoute(current, route);
     }
 
     // ------------------------------------------------------------------
@@ -226,6 +302,7 @@ public class RouteService {
             entity.setLongitude(waypoint.longitude());
             entity.setElevationMeters(waypoint.elevationMeters());
             entity.setNote(waypoint.note());
+            entity.setPhoto(waypoint.photo());
             route.addWaypoint(entity);
             sequence++;
         }
@@ -298,7 +375,8 @@ public class RouteService {
                 route.getCreator().getId(),
                 route.getCreator().getDisplayName(),
                 route.getCreatedAt(),
-                route.getUpdatedAt());
+                route.getUpdatedAt(),
+                likeRepository.countByRoute(route));
     }
 
     private RouteSummary toSummary(Route route) {
@@ -320,7 +398,8 @@ public class RouteService {
                 route.getCreator().getId(),
                 route.getCreator().getDisplayName(),
                 route.getCreatedAt(),
-                route.getUpdatedAt());
+                route.getUpdatedAt(),
+                likeRepository.countByRoute(route));
     }
 
     private WaypointResponse toWaypointResponse(RouteWaypoint waypoint) {
@@ -332,7 +411,8 @@ public class RouteService {
                 waypoint.getLatitude(),
                 waypoint.getLongitude(),
                 waypoint.getElevationMeters(),
-                waypoint.getNote());
+                waypoint.getNote(),
+                waypoint.getPhoto());
     }
 
     private static int estimateMinutes(double distanceMeters) {

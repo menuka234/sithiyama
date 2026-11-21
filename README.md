@@ -96,12 +96,18 @@ docker compose up -d db
 
 | Username | Password | Role |
 |---|---|---|
-| `guide` | `Password123!` | `ROLE_GUIDE` — owns the three seeded routes |
-| `ranger` | `Password123!` | `ROLE_RANGER` — can triage SOS alerts |
+| `guide` | `Password123!` | `ROLE_GUIDE` - owns the three seeded routes |
+| `ranger` | `Password123!` | `ROLE_RANGER` - can triage SOS alerts |
 | `admin` | `Password123!` | `ROLE_ADMIN` |
 
-Seeded routes: *Dothalugala Summit Trail*, *Riverston Knife Edge* (Knuckles) and
-*Horton Plains World's End Loop*.
+The local `mysql` profile also creates any missing demo account at startup,
+because Flyway (and its PostgreSQL seed script) is disabled there. Set
+`SITHIYAMA_DEMO_DATA=false` to skip this. These accounts are for local
+development only.
+
+The PostgreSQL Flyway script also seeds the routes *Dothalugala Summit Trail*,
+*Riverston Knife Edge* (Knuckles) and *Horton Plains World's End Loop*. The
+`mysql` profile seeds only the accounts; create or import routes there.
 
 Try it:
 
@@ -159,6 +165,25 @@ requires `Authorization: Bearer <token>`.
 
 Distance and duration are computed server-side (haversine + a default 3 km/h) when the
 client does not supply them.
+
+### AI route assistant — `/ai`
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/ai/status` | Whether `GEMINI_API_KEY` is configured, and the model name. |
+| `POST` | `/ai/routes/{routeId}/ask` | Ask about one route: `{ "question": "...", "history": [] }`. History turns use `role` = `user` / `model`. Returns `answer`, `source` (`gemini` or `local`) and an optional `notice`. |
+
+The assistant reads the route through the normal visibility rules. With no Gemini key it
+still answers basic facts (distance, difficulty, duration, ascent, checkpoints, start/end)
+from the saved route data. The key stays on the server; the mobile app never sees it.
+
+```powershell
+$env:GEMINI_API_KEY="AIza..."
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=mysql"
+```
+
+Get a key from <https://aistudio.google.com/app/apikey>. Override the model with
+`GEMINI_MODEL` (default `gemini-2.5-flash`).
 
 ### Track sync — `/tracks`
 
@@ -245,6 +270,11 @@ gated by `sithiyama.spatial.enabled`; when it is `false` a bounding-box filter i
 | `sithiyama.jwt.secret` | `JWT_SECRET` | dev-only value (≥ 32 bytes, override it) |
 | `sithiyama.jwt.access-token-ttl` | — | `PT12H` |
 | `sithiyama.spatial.enabled` | — | `true` |
+| `sithiyama.demo-data.enabled` | `SITHIYAMA_DEMO_DATA` | `true` in the `mysql` profile |
+| `sithiyama.ai.gemini.api-key` | `GEMINI_API_KEY` | empty (local route facts only) |
+| `sithiyama.ai.gemini.model` | `GEMINI_MODEL` | `gemini-2.5-flash` |
+| `sithiyama.ai.gemini.base-url` | `GEMINI_BASE_URL` | `https://generativelanguage.googleapis.com` |
+| `sithiyama.ai.gemini.timeout-seconds` | `GEMINI_TIMEOUT_SECONDS` | `30` |
 | `server.port` | `SERVER_PORT` | `8080` |
 
 Active profiles: default (PostgreSQL/PostGIS), `dev` (H2), `test` (H2).
@@ -288,12 +318,12 @@ src/main/resources/db/migration
 
 ## 11. Scope
 
-**Shipped here:** the route library, track sync, trip plans and check-ins, SOS raise and
-triage, node registry, JWT auth and docs.
+**Shipped here:** the route library, Gemini route assistant (with a route-data fallback),
+track sync, trip plans and check-ins, SOS raise and triage, node registry, JWT auth and docs.
 
 **Deliberately not in scope (matching the submission):** mesh relaying, encrypted
 payloads, iOS, downloadable map manager, voice guidance. The optional on-device fall
-classifier and LLM trail summaries live on the app/AI side.
+classifier lives on the app side.
 
 ---
 

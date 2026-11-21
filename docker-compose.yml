@@ -27,11 +27,14 @@ services:
         condition: service_healthy
     environment:
       DB_URL: jdbc:postgresql://db:5432/sithiyama
-      DB_USERNAME: sithiyama
-      DB_PASSWORD: sithiyama
+      DB_USERNAME: root
+      DB_PASSWORD: menuka@2004##
       # Change this before shipping anywhere real.
       JWT_SECRET: ${JWT_SECRET:-sithiyama-compose-signing-key-change-me-0123456789abcdef}
       SERVER_PORT: 8080
+      # Optional: enables Gemini answers; leave empty for route-data-only answers.
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
     ports:
       - "${API_PORT:-8080}:8080"
 

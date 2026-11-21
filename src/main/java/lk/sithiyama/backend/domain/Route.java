@@ -46,7 +46,9 @@ public class Route extends BaseEntity {
         /** Reachable by link, hidden from listings. */
         UNLISTED,
         /** Only the creator (and admins) can read it. */
-        PRIVATE
+        PRIVATE,
+        /** Visible only to friends of the creator. */
+        FRIENDS
     }
 
     @Column(nullable = false, length = 160)
